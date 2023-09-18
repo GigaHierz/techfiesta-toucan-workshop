@@ -1,6 +1,6 @@
 # Retiring Carbon Credits on Celo using Toucan SDK :deciduous_tree:
 
-Retire Carbon Credits on Celo using ToucanSDK :seedling:
+Retire Carbon Credits on Celo using [Toucan SDK](<(https://github.com/ToucanProtocol/toucan-sdk)>) :seedling:
 
 Learn how to make your dApp climate positive with a few lines of code. :woman_technologist:
 
@@ -33,11 +33,19 @@ By the end of this tutorial, you will know
 
 ## Quickstart your project
 
-Clone this repository and open the project in our favorite IDE (e.g., VS Code).
+Clone this repository or get started with the Celo-Composer.
 
 ```
-git clone git@github.com:GigaHierz/co-operate-workshop.git
+git clone git@github.com:GigaHierz/techfiesta-toucan-workshop.git
 ```
+
+or
+
+```
+npx @celo/celo-composer@latest create
+```
+
+Open the project in our favorite IDE (e.g., VS Code).
 
 First navigate into the react-app.
 
@@ -81,8 +89,6 @@ mkdir .env
 
 With the newest update, every dApp that relies on WalletConnect now needs to obtain a projectId from [WalletConnect Cloud](https://cloud.walletconnect.com/sign-in). This is absolutely free and only takes a few minutes.
 
-Provide the projectId to getDefaultWallets and individual RainbowKit wallet connectors like the following:
-
 Add you token ID as vaule for `NEXT_PUBLIC_WC_PROJECT_ID` to the `.env` file.
 
 ```
@@ -123,7 +129,7 @@ import { useEthersProvider, useEthersSigner } from "../utils/ethers";
 
 In case it shows an error message with `Module not found: Can't resolve 'toucan-sdk'`, just delete the node_moudles and run `yarn`or `npm  i` again.
 
-And this part into our function body. You can set the signer and provider directly or at a later point. Here we want to first check if the signer is set, meaning if the user is connected to the application with their wallet.
+And the following part goes into our function body. You can set the signer and provider directly or at a later point. Here we want to first check if the signer is set, meaning if the user is connected to the application with their wallet.
 
 ```typescript
 const provider = useEthersProvider();
@@ -149,7 +155,7 @@ export default function Home() {
   return (
     <div>
       <div className="h1">
-        There we go... a canvas for your next Celo project!
+        There you go... a canvas for your next techfiesta project!
       </div>
     </div>
   );
@@ -182,13 +188,13 @@ Now let's put that code in a function and add a button to trigger it, so we can 
 
 ```typescript
 import ToucanClient from "toucan-sdk";
-import { useProvider, useSigner } from "wagmi";
+import { useEthersProvider, useEthersSigner } from "../utils/ethers";
 import { parseEther } from "ethers/lib/utils";
 import { useState } from "react";
 
 export default function Home() {
-  const provider = useProvider();
-  const { data: signer, isError, isLoading } = useSigner();
+  const provider = useEthersProvider();
+  const signer = useEthersSigner();
 
   const toucan = new ToucanClient("alfajores", provider);
   signer && toucan.setSigner(signer);
@@ -234,14 +240,14 @@ await toucan.retire(parseEther("1.0"), tco2Address);
 Let's create a second function called retirePoolToken as well as a button for the retirement process.
 
 ```typescript
-import { parseEther } from "ethers/lib/utils.js";
-import { useState } from "react";
 import ToucanClient from "toucan-sdk";
-import { useProvider, useSigner } from "wagmi";
+import { useEthersProvider, useEthersSigner } from "../utils/ethers";
+import { parseEther } from "ethers/lib/utils";
+import { useState } from "react";
 
 export default function Home() {
-  const provider = useProvider();
-  const { data: signer, isError, isLoading } = useSigner();
+  const provider = useEthersProvider();
+  const signer = useEthersSigner();
   const toucan = new ToucanClient("alfajores", provider);
   signer && toucan.setSigner(signer);
   const [tco2address, setTco2address] = useState("");
@@ -254,8 +260,8 @@ export default function Home() {
     redeemedTokenAddress && setTco2address(redeemedTokenAddress[0].address);
   };
 
-  const retirePoolToken = async (): Promise<void> => {
-    tco2address.length && (await toucan.retire(parseEther("1"), tco2address));
+  const retire = async (): Promise<void> => {
+    await toucan.retire(parseEther("1.0"), tco2address);
   };
 
   return (
@@ -268,7 +274,7 @@ export default function Home() {
       </button>
       <button
         className="inline-flex w-full justify-center rounded-full border px-5 my-5 py-2 text-md font-medium border-wood bg-prosperity text-black hover:bg-snow"
-        onClick={() => retirePoolToken()}
+        onClick={() => retire()}
       >
         {"Retire Tokens"}
       </button>
@@ -310,19 +316,18 @@ import ToucanClient, { UserRetirementsResponse } from "toucan-sdk";
 import { useAccount } from "wagmi";
 
 export default function List() {
-  const toucan = new ToucanClient("alfajores");
   const { address } = useAccount();
+  const toucan = new ToucanClient("alfajores");
 
   const [retirements, setRetirements] = useState<UserRetirementsResponse[]>([]);
 
-  const getUserRetirements = async () => {
-    const result =
-      address && (await toucan.fetchUserRetirements(address?.toLowerCase()));
+  const fetchRetirements = async (address: string) => {
+    const result = await toucan.fetchUserRetirements(address?.toLowerCase());
     result && setRetirements(result);
   };
 
   useEffect(() => {
-    getUserRetirements();
+    address && fetchRetirements(address);
   });
 
   return (
@@ -402,7 +407,7 @@ export default function List() {
 }
 ```
 
-Add the list page into the header.tsx file and your "Retirement List Page" and you are done!
+Add the list page into the header.tsx file as "Retirements" and you are done!
 
 ---
 
@@ -419,9 +424,9 @@ What does it do in detail:
 
 very cool!! lets try it out!!!
 
-first let's create a new page called `autoOffset.tsx`. Let's use the `usePrepareContractWrite` and `useContractWrite` from the wagmi library to call the `autoOffsetPoolToken` function.
+first let's create a new page called `AutoOffset.tsx`. Let's use the `usePrepareContractWrite` and `useContractWrite` from the wagmi library to call the `autoOffsetPoolToken` function.
 You will need to look up the address of the poolToken you want to retire/offset. You can find all addresses of Toucans [deployed contracts](https://toucan.earth/contracts) on their page.
-The token should already be in your wallet. If you need some for testing, head over to our faucet. Otherwise head over to Ubeswap (soon Uniswap) to buy some. There are other functions in the OffsetHelper, that already overtake the swapping part. So, check it out. On Celo you can use only the token functions like `autoOffsetExactInToken` and `autoOffsetExactOutToken`and don't need the functions for native tokens like `autoOffsetExactInETH` and `autoOffsetExactOutETH`.
+The token should already be in your wallet. If you need some for testing, head over to our [Faucet](https://faucet.toucan.earth/). Otherwise head over to Ubeswap (soon Uniswap) to buy some. There are other functions in the OffsetHelper, that already overtake the swapping part. So, check it out.
 
 We will do the Offsetting directly on Celo (not using the testnet).
 
@@ -453,18 +458,27 @@ export default function autoOffset() {
             type: "uint256",
           },
         ],
+        outputs: [
+          {
+            internalType: "address[]",
+            name: "tco2s",
+            type: "address[]",
+          },
+          {
+            internalType: "uint256[]",
+            name: "amounts",
+            type: "uint256[]",
+          },
+        ],
+        name: "autoOffsetPoolToken",
         stateMutability: "nonpayable",
         type: "function",
       },
     ],
     functionName: "autoOffsetPoolToken",
-    args: [
-      poolAddress,
-      amount,
-      {
-        gasLimit: 2500000,
-      },
-    ],
+    args: [poolAddress, amount],
+    gas: BigInt(2500000),
+    value: BigInt(0),
   });
 
   const { data, isLoading, isSuccess, write } = useContractWrite(config);
@@ -473,11 +487,11 @@ export default function autoOffset() {
 }
 ```
 
-okay. you might get an error. and for a reason. First we will have the user approve the amount that the OffsetHelper will retire. Here the Toucan SDK comes in handy again. We can get the poolcontract by just looking for the symbol like "NCT".
+okay. you might get an error. and for a reason. First we will have the user approve the amount that the OffsetHelper will retire. Here the Toucan SDK comes in handy again. We can get the pool contract by just looking for the symbol like "NCT".
 
 ```typescript
 import ToucanClient from "toucan-sdk";
-import { useProvider, useSigner } from "wagmi";
+import { useEthersProvider, useEthersSigner } from "@/utils/ethers";
 
 const provider = useProvider();
 const { data: signer, isError } = useSigner();
@@ -530,22 +544,16 @@ return (
 If you followed the guide your code should now look like this:
 
 ```typescript
-import { usePrepareContractWrite, useContractWrite, useChainId } from "wagmi";
-import ToucanClient from "toucan-sdk";
-import { useProvider, useSigner } from "wagmi";
-import { parseEther } from "ethers/lib/utils";
-
-export default function AutoOffsetPoolToken() {
-  const provider = useProvider();
+export default function AutoOffset() {
+  const poolAddress = "0x02De4766C272abc10Bc88c220D214A26960a7e92";
   const amount = parseEther("1");
-  const { data: signer, isError } = useSigner();
+  const provider = useEthersProvider();
+  const signer = useEthersSigner();
 
-  const toucan = new ToucanClient("celo", provider);
-  signer && toucan.setSigner(signer);
+  const toucan = new ToucanClient("alfajores", provider, signer);
+
   const poolToken = toucan.getPoolContract("NCT");
-
-  const poolAddress = "0xfb60a08855389F3c0A66b29aB9eFa911ed5cbCB5";
-  const offsetHelperAddress = "0xAB62E8a5A43453339f745EaFcbEE0302A31c3d5E";
+  const offsetHelperAddress = "0x065C0f397ecb9D904aB65242F41B9484AA9cD9Bf";
 
   const approve = async () => {
     return await poolToken.approve(offsetHelperAddress, amount);
@@ -567,7 +575,6 @@ export default function AutoOffsetPoolToken() {
             type: "uint256",
           },
         ],
-        name: "autoOffsetPoolToken",
         outputs: [
           {
             internalType: "address[]",
@@ -580,18 +587,15 @@ export default function AutoOffsetPoolToken() {
             type: "uint256[]",
           },
         ],
+        name: "autoOffsetPoolToken",
         stateMutability: "nonpayable",
         type: "function",
       },
     ],
     functionName: "autoOffsetPoolToken",
-    args: [
-      poolAddress,
-      amount,
-      {
-        gasLimit: 2500000,
-      },
-    ],
+    args: [poolAddress, amount],
+    gas: BigInt(2500000),
+    value: BigInt(0),
   });
 
   const { data, isLoading, isSuccess, write } = useContractWrite(config);
@@ -600,7 +604,7 @@ export default function AutoOffsetPoolToken() {
     const tx = await approve();
     await tx.wait();
 
-    write && write();
+    write?.();
   };
 
   return (
@@ -620,7 +624,7 @@ export default function AutoOffsetPoolToken() {
             rel="noopener noreferrer"
           >
             {" "}
-            Transaction: {JSON.stringify(data.hash)}
+            Transaction: {JSON.stringify(data?.hash)}
           </a>{" "}
         </div>
       )}{" "}
